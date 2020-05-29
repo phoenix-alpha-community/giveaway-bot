@@ -1,26 +1,18 @@
-import json
+import pickle
 from config import DATABASE_LOCATION
 
-def modify(key: str, text) -> None:
-    current = get(full=True)
-    k = "giv_ids"
-    current[k][key] = text
-    file = open(DATABASE_LOCATION, "w")
-    json.dump(current, file, indent=4)
-    file.close()
+def db_read_ids() -> dict:
+    with open(DATABASE_LOCATION, "rb") as file:
+        try:
+            contents = pickle.load(file)
+        except EOFError:
+            contents = {}
 
-def remove(key: str) -> None:
-    current = get(full=True)
-    k = "giv_ids"
-    current[k].pop(key)
-    file = open(DATABASE_LOCATION, "w")
-    json.dump(current, file, indent=4)
-    file.close()
+    return contents
 
-def get(key: str = "giv_ids", full: bool = False) -> [str, list]:
-    file = open(DATABASE_LOCATION, "r")
-    text = json.load(file)
-    file.close()
-    if full:
-        return text
-    return text[key]
+def db_write_ids(key, entry):
+    contents = db_read_ids()
+    contents[key] = entry
+
+    with open(DATABASE_LOCATION, "wb") as file:
+        pickle.dump(contents, file, protocol=4)

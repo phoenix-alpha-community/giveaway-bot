@@ -6,24 +6,20 @@ from dateutil import parser
 from discord.ext import commands
 
 class Giveaway:
-    def __init__(self, winners: int, duration, price: str,
-                 host: discord.User, channel: discord.TextChannel = None,
-                 id_: int = None):
+    def __init__(self, winners: int, duration: str, prize: str,
+                 host: discord.User):
         if winners <= 0:
             raise self.GiveawayWinnersError
 
-        self.channel = channel  # defined after __init__
-        self.duration = duration
+        self.channel = None  # defined after __init__() in create_giv
+        self.duration = self.dur_trnsl(duration)
         self.host = host
-        self.id = id_  # defined after __init__
-        self.prize = price
+        self.id = None  # defined after __init__() in create_giv
+        self.prize = prize
         self.winners = winners
 
-        if type(self.duration) != datetime:
-            self.duration = self.dur_trnsl(duration)
-
     # Internal functions: primary purpose
-    async def create_giv(self, ctx: commands.Context) -> int:
+    async def create_giv(self, ctx: commands.Context) -> None:
         win = "winners"
         if self.winners == 1:
             win = "winner"
@@ -31,7 +27,7 @@ class Giveaway:
         if self.channel is None:
             await self.fetch_channel(ctx)
 
-        message = (await self.channel.send(":FaT: **GIVEAWAY** :FaT:",
+        self.id = (await self.channel.send(":FaT: **GIVEAWAY** :FaT:",
         embed=discord.Embed(
             color=discord.Color.green(),
             title=self.prize,
@@ -39,8 +35,6 @@ class Giveaway:
             description=f"Click the reaction below to enter!\nHosted "
                         f"by: {self.host.mention}"
         ).set_footer(text=f"{str(self.winners)} {win} | Ends at:"))).id
-
-        return message
 
     # Internal functions: secondary purpose
     def dur_trnsl(self, dur) -> datetime:
@@ -70,20 +64,9 @@ class Giveaway:
         Giveaway.channel = giv_channel
         self.channel = giv_channel
 
-    def pack(self) -> dict:
-        d: dict = {"channel": self.channel, "duration": self.duration,
-                   "host": self.host, "id": self.id, "prize": self.prize,
-                   "winners": self.winners}
-        return d
-
     # Errors
     class GiveawayWinnersError(commands.CommandError):
         pass
 
     class GiveawayChannelError(commands.CommandError):
         pass
-
-
-def unpack(d: dict) -> Giveaway:
-    return Giveaway(d["winners"], d["duration"], d["price"], d["host"],
-                    d["channel"], d["id"])

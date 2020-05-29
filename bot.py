@@ -3,7 +3,7 @@ Fear and Terror's bot for giveaways on Discord
 '''
 
 import config
-import database
+from database import db_write_ids
 import discord
 from discord.ext import commands
 from error_handling import handle_error
@@ -40,10 +40,10 @@ async def help_msg(ctx):
 
 @bot.command()
 @commands.has_role(config.BOT_ADMIN_ROLES)
-async def giveaway(ctx, winners: int, duration: str, price: str):
-    giv = Giveaway(winners, duration, price, ctx.author)
-    giv.id = await giv.create_giv(ctx)
-    # database.modify(str(giv.id), giv)
+async def giveaway(ctx, winners: int, duration: str, prize: str):
+    giv = Giveaway(winners, duration, prize, ctx.author)
+    await giv.create_giv(ctx)
+    db_write_ids(giv.id, giv)
 
 ###############################################################################
 # Startup
