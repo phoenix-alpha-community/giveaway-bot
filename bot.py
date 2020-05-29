@@ -49,5 +49,10 @@ async def giveaway(ctx, winners: int, duration: str, prize: str):
 # Startup
 ###############################################################################
 
+def init():
+    config.GUILD = bot.get_guild(config.GUILD_ID)
+    config.GIVEAWAY_CHANNEL = await config.GUILD.get_channel(config.GIVEAWAY_CHANNEL_ID)
+
 if __name__ == "__main__":
     bot.run(config.BOT_TOKEN)
+    init()

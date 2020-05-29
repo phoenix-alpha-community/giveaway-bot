@@ -10,9 +10,19 @@ def db_read_ids() -> dict:
 
     return contents
 
+
 def db_write_ids(key, entry):
     contents = db_read_ids()
     contents[key] = entry
+
+    with open(DATABASE_LOCATION, "wb") as file:
+        pickle.dump(contents, file, protocol=4)
+
+
+def db_remove_ids(*key):
+    contents = db_read_ids()
+    for k in key:
+        contents.pop(k)
 
     with open(DATABASE_LOCATION, "wb") as file:
         pickle.dump(contents, file, protocol=4)

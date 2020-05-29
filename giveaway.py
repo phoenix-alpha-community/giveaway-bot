@@ -7,13 +7,12 @@ from discord.ext import commands
 
 class Giveaway:
     def __init__(self, winners: int, duration: str, prize: str,
-                 host: discord.User):
+                 host: discord.Member):
         if winners <= 0:
             raise self.GiveawayWinnersError
 
-        self.channel = None  # defined after __init__() in create_giv
         self.duration = self.dur_trnsl(duration)
-        self.host = host
+        self.host = host.id
         self.id = None  # defined after __init__() in create_giv
         self.prize = prize
         self.winners = winners
@@ -24,17 +23,20 @@ class Giveaway:
         if self.winners == 1:
             win = "winner"
 
-        if self.channel is None:
-            await self.fetch_channel(ctx)
+        if config.GIVEAWAY_CHANNEL is None:
+            await self.get_channel(ctx)
 
-        self.id = (await self.channel.send(":FaT: **GIVEAWAY** :FaT:",
+        self.id = (await config.GIVEAWAY_CHANNEL.send(":FaT: **GIVEAWAY** :FaT:",
         embed=discord.Embed(
             color=discord.Color.green(),
             title=self.prize,
             timestamp=self.duration,
             description=f"Click the reaction below to enter!\nHosted "
-                        f"by: {self.host.mention}"
+                        f"by: <@{self.host}>"
         ).set_footer(text=f"{str(self.winners)} {win} | Ends at:"))).id
+
+    async def end_giv(self):
+        pass
 
     # Internal functions: secondary purpose
     def dur_trnsl(self, dur) -> datetime:
@@ -52,17 +54,11 @@ class Giveaway:
             return config.TIMEZONE.localize(parser.parse(dur))
         return time.replace(second=0, microsecond=0)
 
-    async def fetch_channel(self, ctx: commands.Context) -> None:
-        giv_channel = None
-        for channel in await ctx.guild.fetch_channels():
-            if channel.id == config.GIVEAWAY_CHANNEL:
-                giv_channel = channel
-                break
-        if giv_channel is None:
-            raise self.GiveawayChannelError
+    async def get_member(self) -> discord.Member:
+        return await config.GUILD.get_member(self.host)
 
-        Giveaway.channel = giv_channel
-        self.channel = giv_channel
+    async def get_message(self) -> discord.Message:
+        return await config.GIVEAWAY_CHANNEL.get_message(self.id)
 
     # Errors
     class GiveawayWinnersError(commands.CommandError):
