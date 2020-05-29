@@ -9,8 +9,8 @@ from discord.ext import commands
 from error_handling import handle_error
 from giveaway import Giveaway
 
-
 bot = commands.Bot(command_prefix=config.BOT_CMD_PREFIX, help_command=None)
+
 
 ###############################################################################
 # Events
@@ -45,6 +45,7 @@ async def giveaway(ctx, winners: int, duration: str, prize: str):
     await giv.create_giv(ctx)
     db_write_ids(giv.id, giv)
 
+
 ###############################################################################
 # Startup
 ###############################################################################
@@ -52,6 +53,7 @@ async def giveaway(ctx, winners: int, duration: str, prize: str):
 def init():
     config.GUILD = bot.get_guild(config.GUILD_ID)
     config.GIVEAWAY_CHANNEL = await config.GUILD.get_channel(config.GIVEAWAY_CHANNEL_ID)
+
 
 if __name__ == "__main__":
     bot.run(config.BOT_TOKEN)
