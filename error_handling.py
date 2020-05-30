@@ -1,4 +1,4 @@
-from config import HELP_MESSAGE
+from config import HELP_MESSAGE, GIVEAWAY_CHANNEL
 import traceback
 from discord.ext import commands
 from giveaway import Giveaway
@@ -27,6 +27,7 @@ async def handle_error(ctx: commands.Context,
     # Costume errors
     if isinstance(error, Giveaway.GiveawayWinnersError):
         await ctx.send(f"> {ctx.author.mention} Winners amount is too low.")
+        return
 
     # Permission errors
     if isinstance(error, commands.MissingRole) \
@@ -38,12 +39,6 @@ async def handle_error(ctx: commands.Context,
     if isinstance(error, commands.CheckFailure):
         await ctx.send(f"> {ctx.author.mention} Command is not applicable or "
                        f"you lack the permission to use it.")
-        return
-
-    # Internal errors
-    if isinstance(error, Giveaway.GiveawayChannelError):
-        await ctx.send(f"> {ctx.author.mention} An internal error has occurred."
-                       "Please contact the programming team and tell them about it.")
         return
 
     # Unknown command

@@ -1,9 +1,11 @@
 import config
 import discord
 import pytimeparse
+from database import db_read_ids, db_remove_ids
 from datetime import datetime, timedelta
 from dateutil import parser
 from discord.ext import commands
+from random import randrange
 
 
 class Giveaway:
@@ -19,25 +21,52 @@ class Giveaway:
         self.winners = winners
 
     # Internal functions: primary purpose
-    async def create_giv(self, ctx: commands.Context) -> None:
+    async def create_giv(self) -> None:
         win = "winners"
         if self.winners == 1:
             win = "winner"
 
-        if config.GIVEAWAY_CHANNEL is None:
-            await self.get_channel(ctx)
-
         self.id = (await config.GIVEAWAY_CHANNEL.send(":FaT: **GIVEAWAY** :FaT:",
-                                                      embed=discord.Embed(
-                                                          color=discord.Color.green(),
-                                                          title=self.prize,
-                                                          timestamp=self.duration,
-                                                          description=f"Click the reaction below to enter!\nHosted "
-                                                                      f"by: <@{self.host}>"
-                                                      ).set_footer(text=f"{str(self.winners)} {win} | Ends at:"))).id
+              embed=discord.Embed(
+                  color=discord.Color.green(),
+                  title=self.prize,
+                  timestamp=self.duration,
+                  description=f"Click the reaction below to enter!\nHosted "
+                              f"by: {(self.get_host()).mention}"
+              ).set_footer(text=f"{str(self.winners)} {win} | Ends at:"))).id
+
+        await (await self.get_message()).add_reaction(config.GIVEAWAY_EMOJI.decode())
 
     async def end_giv(self):
-        pass
+        msg = await self.get_message()
+
+        winners = await self.draw_winners(msg)
+
+        if type(winners[0]) == discord.Member:
+            text_1 = ""
+            text_2 = ""
+            for w in winners:
+                text_1 += f"\n{w.mention}"
+                text_2 += f"{w.mention}, "
+
+            win_text = "Winners"
+            if self.winners == 1:
+                win_text = "Winner"
+                text_1 = winners[0].mention
+
+            await config.GIVEAWAY_CHANNEL.send(f"Congratulations {text_2[:-2]}! You won: {self.prize}!")
+        else:
+            win_text = "Winners"
+            text_1 = winners[0]
+
+        embed = msg.embeds[0]
+        embed.color = discord.Color.dark_grey()
+        embed.description = f"{win_text}: {text_1}\nHosted by: {(self.get_host()).mention}"
+        embed.set_footer(text=f"{str(self.winners)} {win_text} | Ended at:")
+
+        await msg.edit(content=":FaT: **GIVEAWAY ENDED** :FaT:", embed=embed)
+
+        db_remove_ids(self.id)
 
     # Internal functions: secondary purpose
     def dur_trnsl(self, dur) -> datetime:
@@ -55,15 +84,31 @@ class Giveaway:
             return config.TIMEZONE.localize(parser.parse(dur))
         return time.replace(second=0, microsecond=0)
 
-    async def get_member(self) -> discord.Member:
-        return await config.GUILD.get_member(self.host)
+    def get_host(self) -> discord.Member:
+        return config.GUILD.get_member(self.host)
 
     async def get_message(self) -> discord.Message:
-        return await config.GIVEAWAY_CHANNEL.get_message(self.id)
+        return await config.GIVEAWAY_CHANNEL.fetch_message(self.id)
+
+    async def draw_winners(self, msg: discord.Message) -> list:
+        entered = []
+        async for u in msg.reactions[0].users():
+            if not u.bot:
+                entered.append(u)
+
+        if len(entered) < 1:
+            await config.GIVEAWAY_CHANNEL.send(f"> The giveaway concluded with no winners.")
+            return ["No one"]
+
+        winners = []
+        for _ in range(self.winners):
+            winners.append(entered[randrange(len(entered))])
+
+        return winners
 
     # Errors
     class GiveawayWinnersError(commands.CommandError):
         pass
 
-    class GiveawayChannelError(commands.CommandError):
-        pass
+async def giv_end(giv_id):
+    await (db_read_ids())[giv_id].end_giv()

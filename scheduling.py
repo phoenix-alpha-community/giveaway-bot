@@ -1,15 +1,12 @@
 import asyncio
 import config
-import discord
-import pytz
 import sys
 import transaction
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-from datetime import datetime, timedelta
+from datetime import datetime
 
-# tracks channels that are not to be deleted because they're within grace period
-# held in memory because persistency is not necessary
+
 channel_ids_grace_period = set()
 
 jobstores = {
@@ -32,8 +29,7 @@ def init_scheduler():
     sys.stdout.write("done\n")
 
 
-def delayed_execute(func, args, timedelta):
-    exec_time = datetime.now(config.TIMEZONE) + timedelta
+def delayed_execute(func, args, exec_time: datetime):
 
     id = _scheduler.add_job(_execute_wrapper, 'date',
                             args=[func] + args, run_date=exec_time).id

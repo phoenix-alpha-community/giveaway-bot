@@ -1,20 +1,19 @@
-import discord
-import pytz
-
-
 # Required settings (must be changed)
-BOT_TOKEN: str = "NjMxNDkzMTE4NDk1MjkzNDQw.XtDy5Q.mJBRFtUd65BfMMzwrHYVhCHsrBU"
+BOT_TOKEN: str = "BOT TOKEN HERE"
 
 # Optional settings (may be changed)
-BOT_CMD_PREFIX: str = "-"
+BOT_CMD_PREFIX: str = "^"
 BOT_ADMIN_ROLES: [int, list] = 677916986352730112  # Test role id, must be changed
 GIVEAWAY_CHANNEL_ID: int = 643985296668622848  # Test channel id, must be changed
 GUILD_ID: int = 643983215056519178  # Test server id, must be changed
+GIVEAWAY_EMOJI: str = b"\xF0\x9F\x8E\x89"  # unicode emojis only (https://apps.timwhitlock.info/emoji/tables/unicode)
 DATABASE_LOCATION: str = "database.pickle"
 
 ###############################################################################
 # DO NOT EDIT BELOW
 ###############################################################################
+import discord
+import pytz
 
 SCHEDULER_DB_FILENAME = "scheduler-db.sqlite"
 

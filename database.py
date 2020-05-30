@@ -11,7 +11,7 @@ def db_read_ids() -> dict:
     return contents
 
 
-def db_write_ids(key, entry):
+def db_write_ids(key, entry) -> None:
     contents = db_read_ids()
     contents[key] = entry
 
@@ -19,7 +19,7 @@ def db_write_ids(key, entry):
         pickle.dump(contents, file, protocol=4)
 
 
-def db_remove_ids(*key):
+def db_remove_ids(*key) -> None:
     contents = db_read_ids()
     for k in key:
         contents.pop(k)

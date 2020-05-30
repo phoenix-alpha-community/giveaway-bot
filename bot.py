@@ -3,11 +3,12 @@ Fear and Terror's bot for giveaways on Discord
 '''
 
 import config
-from database import db_write_ids
 import discord
+import error_handling
+from database import db_write_ids
 from discord.ext import commands
-from error_handling import handle_error
-from giveaway import Giveaway
+from giveaway import Giveaway, giv_end
+from scheduling import init_scheduler, delayed_execute
 
 bot = commands.Bot(command_prefix=config.BOT_CMD_PREFIX, help_command=None)
 
@@ -22,11 +23,14 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
+    init_scheduler()
+    init()
+    print('------')
 
 
 @bot.event
 async def on_command_error(ctx, error):
-    await handle_error(ctx, error)
+    await error_handling.handle_error(ctx, error)
 
 
 ###############################################################################
@@ -35,15 +39,30 @@ async def on_command_error(ctx, error):
 
 @bot.command(aliases=["help"])
 async def help_msg(ctx):
+    """
+        Sends a help message with description of every available command.
+    """
+
     await ctx.send(embed=config.HELP_MESSAGE)
 
 
 @bot.command()
 @commands.has_role(config.BOT_ADMIN_ROLES)
 async def giveaway(ctx, winners: int, duration: str, prize: str):
-    giv = Giveaway(winners, duration, prize, ctx.author)
-    await giv.create_giv(ctx)
+    """
+    Creates a giveaway in the giveaway channel.
+
+    Attributes:
+        winners (int): The amount of winners of the giveaway.
+        duration (str): The time before, or at which, the giveaway ends.
+                        See the help message for time formats.
+        prize (str): The prize of the giveaway.
+    """
+
+    giv = Giveaway(winners, duration, prize, ctx.author) #
+    await giv.create_giv()
     db_write_ids(giv.id, giv)
+    delayed_execute(giv_end, [giv.id], giv.duration)
 
 
 ###############################################################################
@@ -52,9 +71,9 @@ async def giveaway(ctx, winners: int, duration: str, prize: str):
 
 def init():
     config.GUILD = bot.get_guild(config.GUILD_ID)
-    config.GIVEAWAY_CHANNEL = await config.GUILD.get_channel(config.GIVEAWAY_CHANNEL_ID)
+    config.GIVEAWAY_CHANNEL = config.GUILD.get_channel(config.GIVEAWAY_CHANNEL_ID)
+    print("Set-up Guild and channel done")
 
 
 if __name__ == "__main__":
     bot.run(config.BOT_TOKEN)
-    init()
