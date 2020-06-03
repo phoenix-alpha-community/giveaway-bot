@@ -1,6 +1,6 @@
-'''
+"""
 Fear and Terror's bot for giveaways on Discord
-'''
+"""
 
 import config
 import discord
@@ -24,7 +24,7 @@ async def on_ready():
     print(bot.user.id)
     print('------')
     init_scheduler()
-    init()
+    await init()
     print('------')
 
 
@@ -70,9 +70,10 @@ async def giveaway(ctx, winners: int, duration: str, prize: str, *description):
 # Startup
 ###############################################################################
 
-def init():
+async def init():
     config.GUILD = bot.get_guild(config.GUILD_ID)
     config.GIVEAWAY_CHANNEL = config.GUILD.get_channel(config.GIVEAWAY_CHANNEL_ID)
+    await bot.change_presence(activity=discord.Game(f"FaT | {config.BOT_CMD_PREFIX}help"))
 
     try:
         with open(config.DATABASE_LOCATION):

@@ -32,9 +32,9 @@ class Giveaway:
                   color=discord.Color.green(),
                   title=self.prize,
                   timestamp=self.duration,
-                  description=f"{self.description}Click the reaction below to enter!\nHosted "
-                              f"by: {(self.get_host()).mention}"
-              ).set_footer(text=f"{str(self.winners)} {win} | Ends at:"))).id
+                  description=f"{self.description}Click the reaction below to enter!"
+              ).set_footer(text=f"{str(self.winners)} {win} | Ends:").add_field(
+                  name="Host:", value=(self.get_host()).mention, inline=False))).id
 
         await (await self.get_message()).add_reaction(config.GIVEAWAY_EMOJI.decode())
 
@@ -62,9 +62,9 @@ class Giveaway:
 
         embed = msg.embeds[0]
         embed.color = discord.Color.dark_grey()
-        embed.description = f"{self.description}{win_text}: {text_1}" \
-                            f"\nHosted by: {(self.get_host()).mention}"
-        embed.set_footer(text=f"{str(self.winners)} {win_text} | Ended at:")
+        embed.description = self.description
+        embed.set_footer(text=f"{str(self.winners)} {win_text} | Ended:")
+        embed.add_field(name=win_text+":", value=text_1, inline=False)
 
         await msg.edit(content=":FaT: **GIVEAWAY ENDED** :FaT:", embed=embed)
 

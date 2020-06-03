@@ -1,6 +1,5 @@
 TODO:
 - add all docs
-- winners and host as fields in the giveaway embed
 - close_giveaway command
 - reroll command
 - more testing
