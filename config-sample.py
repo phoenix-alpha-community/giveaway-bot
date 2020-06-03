@@ -6,8 +6,8 @@ BOT_CMD_PREFIX: str = "^"
 BOT_ADMIN_ROLES: [int, list] = 677916986352730112  # Test role id, must be changed
 GIVEAWAY_CHANNEL_ID: int = 643985296668622848  # Test channel id, must be changed
 GUILD_ID: int = 643983215056519178  # Test server id, must be changed
-GIVEAWAY_EMOJI: str = b"\xF0\x9F\x8E\x89"  # unicode emojis only (https://apps.timwhitlock.info/emoji/tables/unicode)
-DATABASE_LOCATION: str = "database.pickle"
+GIVEAWAY_EMOJI: str = b"\xF0\x9F\x8E\x89"  # Unicode emojis only (https://apps.timwhitlock.info/emoji/tables/unicode)
+DATABASE_LOCATION: str = "database.pickle"  # If this file is missing it will be created during startup
 
 ###############################################################################
 # DO NOT EDIT BELOW
@@ -21,15 +21,15 @@ HELP_MESSAGE = discord.Embed(
     title="Help",
     color=discord.Color.gold(),
     description=(f"""```fix\n{BOT_CMD_PREFIX}giveaway [winners] [duration]"""
-                 """ [prize]```Used to start a giveaway. Insert the """
-                 """prize, the amount of winners and the duration of the giveaway."""
-                 """The duration can have different formats:\n- **+xy** """
-                 """Examples: `"+4h"`, `"+2h 30m"`, `"+1d 6h 24m"`\n- **M/D/Y   T** """
-                 """Examples: `"06/28/20 6pm"`, `"12/03/21 7:25 am"`\nPlease mind the double quotes.""")
+                 """ "[prize]" [description]```Used to start a giveaway. Insert the """
+                 """prize, the amount of winners and the duration of the giveaway. The description is optional."""
+                 """\nThe duration can have different formats:\n- **+xy** """
+                 """Examples: `+4h`, `"+2h 30m"`, `"+1d 6h 24m"`\n- **M/D/Y   T** """
+                 """Examples: `"06/28/20 6pm"`, `"12/03/21 7:25 am"`\nPlease mind every double quote.""")
 )
 
-TIMEZONE = pytz.timezone("US/Eastern")
+TIMEZONE = pytz.timezone("US/Eastern")  # Is used only as a standard timezone for all internal dates. Changing it has no effect.
 
-GIVEAWAY_CHANNEL = None  # defined later after startup, bot.py
+GIVEAWAY_CHANNEL = None  # defined later during startup
 
-GUILD = None  # defined later after startup, bot.py
+GUILD = None  # defined later during startup

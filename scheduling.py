@@ -1,3 +1,7 @@
+"""
+This module is used to delay the execution of any function. This is used to end giveaways.
+"""
+
 import asyncio
 import config
 import sys
@@ -5,7 +9,6 @@ import transaction
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from datetime import datetime
-
 
 channel_ids_grace_period = set()
 
@@ -30,6 +33,18 @@ def init_scheduler():
 
 
 def delayed_execute(func, args, exec_time: datetime):
+    """
+    Executes a function at a later date/time.
+
+    Attributes:
+        func (function): The function to be executed at a later date/time.
+        args (list): The list of arguments for the given function.
+        exec_time (datetime.datetime): The date/time at which the given
+                                       function gets executed.
+
+    Returns:
+        None
+    """
 
     id = _scheduler.add_job(_execute_wrapper, 'date',
                             args=[func] + args, run_date=exec_time).id

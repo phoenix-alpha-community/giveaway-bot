@@ -1,5 +1,4 @@
 TODO:
-- add all docs
 - close_giveaway command
 - reroll command
 - more testing
