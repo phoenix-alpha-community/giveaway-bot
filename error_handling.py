@@ -1,16 +1,16 @@
-from config import HELP_MESSAGE, GIVEAWAY_CHANNEL
+from config import HELP_MESSAGE
 import traceback
 from discord.ext import commands
 from giveaway import Giveaway
 
 async def handle_error(ctx: commands.Context,
                        error: commands.CommandError) -> None:
-    '''
+    """
     Global error handler.
     Responds to CommandErrors with appropriate messages in the Discord channel
     in which the command was used.
     This error handler should be called from `bot.on_command_error`.
-    '''
+    """
 
     # Syntax errors
     syntax_error_classes = [

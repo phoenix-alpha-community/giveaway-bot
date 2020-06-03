@@ -1,4 +1,4 @@
 TODO:
-- close_giveaway command
 - reroll command
 - more testing
+- *maybe* improve help command with in depth info on every command

@@ -5,6 +5,7 @@ Fear and Terror's bot for giveaways on Discord
 import config
 import discord
 import error_handling
+from check_roles import is_admin
 from database import db_write_ids
 from discord.ext import commands
 from giveaway import Giveaway, giv_end
@@ -42,6 +43,9 @@ async def help_msg(ctx):
     """
     Sends a help message with description of every available command.
 
+    Aliases:
+        "help"
+
     Attributes:
         None
 
@@ -52,11 +56,15 @@ async def help_msg(ctx):
     await ctx.send(embed=config.HELP_MESSAGE)  # Send the help message
 
 
-@bot.command()
-@commands.has_role(config.BOT_ADMIN_ROLES)
+@bot.command(aliases=["create", "create_giv", "start", "start_giv", "giv",
+                      "create_giveaway", "start_giveaway"])
 async def giveaway(ctx, winners: int, duration: str, prize: str, *description):
     """
     Summons a giveaway in the giveaway channel.
+
+    Aliases:
+        "create", "create_giv", "start", "start_giv", "giv",
+        "create_giveaway", "start_giveaway"
 
     Attributes:
         winners (int): The amount of winners of the giveaway.
@@ -69,10 +77,31 @@ async def giveaway(ctx, winners: int, duration: str, prize: str, *description):
         None
     """
 
+    is_admin(ctx.author)  # Check if the author is an admin.
+
     giv = Giveaway(winners, duration, prize, description, ctx.author)  # Create giveaway object
     await giv.create_giv()  # Start giveaway
+    giv.timer_id = delayed_execute(giv_end, [giv.id], giv.duration)  # Start the "timer"
     db_write_ids(giv.id, giv)  # Save the giveaway in the database
-    delayed_execute(giv_end, [giv.id], giv.duration)  # Start the "timer"
+
+@bot.command(aliases=["end", "close", "end_giv", "close_giv", "end_giveaway"])
+async def close_giveaway(ctx, msg_id: int):
+    """
+    Closes the giveaway prematurely.
+
+    Aliases:
+        "end", "close", "end_giv", "close_giv", "end_giveaway"
+
+    Attributes:
+        msg_id (int): Id of the giveaway message of the giveaway to close.
+
+    Returns:
+        None
+    """
+
+    is_admin(ctx.author)  # Check if the author is an admin.
+
+    await giv_end(msg_id)  # End the giveaway.
 
 
 ###############################################################################

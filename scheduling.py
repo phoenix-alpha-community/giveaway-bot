@@ -6,8 +6,9 @@ import asyncio
 import config
 import sys
 import transaction
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from apscheduler.jobstores.base import JobLookupError
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime
 
 channel_ids_grace_period = set()
@@ -61,4 +62,7 @@ async def _execute_wrapper(func, *args, **kwargs):
 
 
 def deschedule(job_id):
-    _scheduler.remove_job(job_id)
+    try:
+        _scheduler.remove_job(job_id)
+    except JobLookupError:
+        pass

@@ -1,3 +1,7 @@
+"""
+This module is used to host the Giveaway class.
+"""
+
 import config
 import discord
 import pytimeparse
@@ -6,11 +10,12 @@ from datetime import datetime, timedelta
 from dateutil import parser
 from discord.ext import commands
 from random import randrange
+from scheduling import deschedule
 
 
 class Giveaway:
     """
-    Giveaway class. This class contains every information needed.
+    This class contains every information needed during the lifespan of a giveaway.
 
     Attributes:
         winners (int): The amount of winners of the giveaway.
@@ -35,6 +40,7 @@ class Giveaway:
         self.host = host.id  # The id of the member who started the giveaway. (type: int)
         self.id = None  # *Check doc below*
         self.prize = prize  # The prize of the giveaway. (type: str)
+        self.timer_id = None  # The id of the "timer". Assigned later.
         self.winners = winners  # The amount of members that can win. (type: int)
 
         """
@@ -116,8 +122,8 @@ class Giveaway:
 
         await msg.edit(content=":FaT: **GIVEAWAY ENDED** :FaT:", embed=embed)
 
-        # Remove the giveaway from the database.
-        db_remove_ids(self.id)
+        deschedule(self.timer_id)  # Remove the giveaway timer. This makes sure no errors occur in case the giveaway was closed manually.
+        db_remove_ids(self.id)  # Remove the giveaway from the database.
 
     # Internal functions: secondary purpose
     def convert_dur(self, dur) -> datetime:
@@ -183,6 +189,12 @@ class Giveaway:
     async def get_message(self) -> discord.Message:
         """
         Get the message object of the giveaway message using it's id.
+
+        Attributes:
+            None
+
+        Returns:
+            discord.Message: The giveaway message.
         """
 
         return await config.GIVEAWAY_CHANNEL.fetch_message(self.id)
