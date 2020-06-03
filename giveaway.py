@@ -10,11 +10,12 @@ from random import randrange
 
 class Giveaway:
     def __init__(self, winners: int, duration: str, prize: str,
-                 host: discord.Member):
+                 description, host: discord.Member):
         if winners <= 0:
             raise self.GiveawayWinnersError
 
         self.duration = self.dur_trnsl(duration)
+        self.description = self.format_desc(description)
         self.host = host.id
         self.id = None  # defined after __init__() in create_giv
         self.prize = prize
@@ -31,7 +32,7 @@ class Giveaway:
                   color=discord.Color.green(),
                   title=self.prize,
                   timestamp=self.duration,
-                  description=f"Click the reaction below to enter!\nHosted "
+                  description=f"{self.description}Click the reaction below to enter!\nHosted "
                               f"by: {(self.get_host()).mention}"
               ).set_footer(text=f"{str(self.winners)} {win} | Ends at:"))).id
 
@@ -61,7 +62,8 @@ class Giveaway:
 
         embed = msg.embeds[0]
         embed.color = discord.Color.dark_grey()
-        embed.description = f"{win_text}: {text_1}\nHosted by: {(self.get_host()).mention}"
+        embed.description = f"{self.description}{win_text}: {text_1}" \
+                            f"\nHosted by: {(self.get_host()).mention}"
         embed.set_footer(text=f"{str(self.winners)} {win_text} | Ended at:")
 
         await msg.edit(content=":FaT: **GIVEAWAY ENDED** :FaT:", embed=embed)
@@ -84,6 +86,13 @@ class Giveaway:
             return config.TIMEZONE.localize(parser.parse(dur))
         return time.replace(second=0, microsecond=0)
 
+    def format_desc(self, description: tuple) -> str:
+        desc = ""
+        for s in description:
+            desc += " " + s + " "
+
+        return "\n" + desc + "\n"
+
     def get_host(self) -> discord.Member:
         return config.GUILD.get_member(self.host)
 
@@ -102,7 +111,12 @@ class Giveaway:
 
         winners = []
         for _ in range(self.winners):
-            winners.append(entered[randrange(len(entered))])
+            try:
+                w = entered[randrange(len(entered))]
+            except ValueError:
+                break
+            winners.append(w)
+            entered.remove(w)
 
         return winners
 

@@ -48,7 +48,7 @@ async def help_msg(ctx):
 
 @bot.command()
 @commands.has_role(config.BOT_ADMIN_ROLES)
-async def giveaway(ctx, winners: int, duration: str, prize: str):
+async def giveaway(ctx, winners: int, duration: str, prize: str, *description):
     """
     Creates a giveaway in the giveaway channel.
 
@@ -57,9 +57,10 @@ async def giveaway(ctx, winners: int, duration: str, prize: str):
         duration (str): The time before, or at which, the giveaway ends.
                         See the help message for time formats.
         prize (str): The prize of the giveaway.
+        description (str): [Optional] The description of the giveaway.
     """
 
-    giv = Giveaway(winners, duration, prize, ctx.author) #
+    giv = Giveaway(winners, duration, prize, description, ctx.author)
     await giv.create_giv()
     db_write_ids(giv.id, giv)
     delayed_execute(giv_end, [giv.id], giv.duration)
@@ -72,7 +73,15 @@ async def giveaway(ctx, winners: int, duration: str, prize: str):
 def init():
     config.GUILD = bot.get_guild(config.GUILD_ID)
     config.GIVEAWAY_CHANNEL = config.GUILD.get_channel(config.GIVEAWAY_CHANNEL_ID)
-    print("Set-up Guild and channel done")
+
+    try:
+        with open(config.DATABASE_LOCATION):
+            pass
+    except FileNotFoundError:
+        with open(config.DATABASE_LOCATION, "w"):
+            pass
+
+    print("Initial set-up completed")
 
 
 if __name__ == "__main__":
