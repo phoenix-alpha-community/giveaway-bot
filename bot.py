@@ -8,7 +8,7 @@ import error_handling
 from check_roles import is_admin
 from database import db_write_ids
 from discord.ext import commands
-from giveaway import Giveaway, giv_end
+from giveaway import Giveaway, giv_end, draw_winners
 from scheduling import init_scheduler, delayed_execute
 
 bot = commands.Bot(command_prefix=config.BOT_CMD_PREFIX, help_command=None)
@@ -84,13 +84,13 @@ async def giveaway(ctx, winners: int, duration: str, prize: str, *description):
     giv.timer_id = delayed_execute(giv_end, [giv.id], giv.duration)  # Start the "timer"
     db_write_ids(giv.id, giv)  # Save the giveaway in the database
 
-@bot.command(aliases=["end", "close", "end_giv", "close_giv", "end_giveaway"])
-async def close_giveaway(ctx, msg_id: int):
+@bot.command(aliases=["end", "end_giv", "close_giv", "end_giveaway", "close_giveaway"])
+async def close(ctx, msg_id: int):
     """
     Closes the giveaway prematurely.
 
     Aliases:
-        "end", "close", "end_giv", "close_giv", "end_giveaway"
+        "end", "end_giv", "close_giv", "end_giveaway", "close_giveaway"
 
     Attributes:
         msg_id (int): Id of the giveaway message of the giveaway to close.
@@ -102,6 +102,44 @@ async def close_giveaway(ctx, msg_id: int):
     is_admin(ctx.author)  # Check if the author is an admin.
 
     await giv_end(msg_id)  # End the giveaway.
+
+
+@bot.command(aliases=["reroll_giv", "reroll_giveaway"])
+async def reroll(ctx, msg_id: int, winners: int = 1):
+    """
+    Closes the giveaway prematurely.
+
+    Aliases:
+        "reroll_giv", "reroll_giveaway"
+
+    Attributes:
+        msg_id (int): Id of the giveaway message of the giveaway to reroll.
+        winners (int): The amount of winners to reroll. Default = 1
+
+    Returns:
+        None
+    """
+
+    # Check if the number of winners is lower or equal to 0. If it is, raise an error.
+    if winners <= 0:
+        raise Giveaway.GiveawayWinnersError
+
+    msg: discord.Message = await config.GIVEAWAY_CHANNEL.fetch_message(msg_id)  # Get the message object of the giveaway message.
+    new = await draw_winners(msg, winners, reroll=True)  # Draw the new winners. (type: list)
+
+    # Check if the first winner is a member object. If it's not return.
+    if new[0] != discord.Member:
+        return
+
+    # Format the text for the message
+    text = ""
+    for member in new:
+        text += "\n - " + member.mention
+    text_2 = "winners"
+    if len(new) == 1:
+        text_2 = "winner"
+
+    await ctx.send(f">>> **New {text_2}:**{text}")  # Send the message with the new winners.
 
 
 ###############################################################################

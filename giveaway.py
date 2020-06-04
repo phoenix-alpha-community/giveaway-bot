@@ -5,6 +5,7 @@ This module is used to host the Giveaway class.
 import config
 import discord
 import pytimeparse
+import re
 from database import db_read_ids, db_remove_ids
 from datetime import datetime, timedelta
 from dateutil import parser
@@ -91,7 +92,7 @@ class Giveaway:
 
         msg = await self.get_message()  # Get the message object of the giveaway. (type: discord.Message)
 
-        winners = await self.draw_winners(msg)  # Draw the winners of the giveaway. (type: list)
+        winners = await draw_winners(msg, self.winners)  # Draw the winners of the giveaway. (type: list)
 
         # Check if the first winner is a member object.
         if type(winners[0]) == discord.Member:
@@ -199,39 +200,6 @@ class Giveaway:
 
         return await config.GIVEAWAY_CHANNEL.fetch_message(self.id)
 
-    async def draw_winners(self, msg: discord.Message) -> list:
-        """
-        Draws the winners of the giveaway.
-
-        Attributes:
-            msg (discord.Message): The message object of the giveaway message.
-
-        Returns:
-            list: The list of member who where drawn.
-        """
-
-        # Insert every member who reacted to the giveaway message, in a list.
-        entered = []
-        async for u in msg.reactions[0].users():
-            if not u.bot:  # Make sure the member is not a bot account.
-                entered.append(u)
-
-        # Check if the number of members who entered is bigger or equal to 1. If it's not return no winners.
-        if len(entered) < 1:
-            await config.GIVEAWAY_CHANNEL.send(f"> The giveaway concluded with no winners.")
-            return ["No one"]
-
-        winners = []
-        for _ in range(self.winners):  # Repeat for the amount of members that can win.
-            try:
-                w = entered[randrange(len(entered))]  # Draw a winner from the list of members who entered.
-            except ValueError:
-                break  # Break the loop if there is no one left in the list
-            winners.append(w)  # Append the drawn member to the list of winners.
-            entered.remove(w)  # Remove the drawn member from the list of people who entered.
-
-        return winners  # Return the list of winners
-
     # Errors
     class GiveawayWinnersError(commands.CommandError):
         """
@@ -239,6 +207,51 @@ class Giveaway:
         It gets raised when the amount of winners is lower or equal to 0
         """
         pass
+
+
+async def draw_winners(msg: discord.Message, amount: int, reroll: bool = False) -> list:
+    """
+    Draws the winners of the giveaway.
+
+    Attributes:
+        msg (discord.Message): The message object of the giveaway message.
+        amount (int): The amount of winners to be drawn.
+        reroll (bool): If this function has been summoned by the reroll command, set to True.
+
+    Returns:
+        list: The list of member who where drawn.
+    """
+
+    # Insert every member who reacted to the giveaway message, in a list.
+    entered = []
+    async for u in msg.reactions[0].users():
+        if not u.bot:  # Make sure the member is not a bot account.
+            entered.append(u)
+
+    # Check if the function was called by the reroll command. If so, remove from entered all members who already won.
+    if reroll:
+        pattern = r"<@([0-9]+)>"
+        for match in re.finditer(pattern, msg.embeds[0].fields[1].value):
+            entered.remove(config.GUILD.get_member(int(match.group(1))))
+
+    # Check if the number of members who entered is bigger or equal to 1. If it's not return no winners.
+    if len(entered) < 1:
+        text = f"> **The giveaway concluded with no winners.**"
+        if reroll:  # Check if the function was called by the reroll command. If so, change the text.
+            text = f"> **No one else entered the giveaway**"
+        await config.GIVEAWAY_CHANNEL.send(text)
+        return ["No one"]
+
+    winners = []
+    for _ in range(amount):  # Repeat for the amount of members that can win.
+        try:
+            w = entered[randrange(len(entered))]  # Draw a winner from the list of members who entered.
+        except ValueError:
+            break  # Break the loop if there is no one left in the list
+        winners.append(w)  # Append the drawn member to the list of winners.
+        entered.remove(w)  # Remove the drawn member from the list of people who entered.
+
+    return winners  # Return the list of winners
 
 async def giv_end(giv_id):
     """
