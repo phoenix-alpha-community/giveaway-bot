@@ -30,13 +30,13 @@ HELP_MESSAGE = discord.Embed(
                 """giveaway. The description is optional.\nThe duration can have """
                 """different formats:\n- **+xy** Examples: `+4h`, `"+2h 30m"`, """
                 """`"+1d 6h 24m"`\n- **M/D/Y  T** Examples: `"06/28/20 6pm"`, """
-                """`"12/03/21 7:25 am"`\nPlease mind all double quote."""
+                """`"12/03/21 7:25 am"`\nPlease mind all double quotes."""
                 f"""```fix\n{BOT_CMD_PREFIX}close [id]```Used to close """
                 """a giveaway. Insert the id of the giveaway message to be closed."""
                 f"""```fix\n{BOT_CMD_PREFIX}reroll [id] [winners]```Used to """
-                """reroll an amount of winners of a giveaway. Insert the id """
+                """re-roll an amount of winners of a giveaway. Insert the id """
                 """of the giveaway message of which one or more winners need """
-                """to be rerolled and the amount of winners to reroll."""))
+                """to be re-rolled and the amount of winners to re-roll."""))
 
 TIMEZONE = pytz.timezone("US/Eastern")  # Is used only as a standard timezone for all internal dates. Changing it has no effect.
 
