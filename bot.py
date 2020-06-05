@@ -38,40 +38,49 @@ async def on_command_error(ctx, error):
 # Commands
 ###############################################################################
 
-@bot.command(aliases=["help", "info"])
-async def help_msg(ctx, info: str = False):
+@bot.command(aliases=["help", "cmd_name"])
+async def help_msg(ctx, cmd_name: str = False):
     """
-    Sends a help message with description of every available command.
+    Sends a help message with description of every available command. Can also send command-specific help messages. These actually return the docs of the function.
 
     Aliases:
         "help", "info"
 
     Attributes:
-        info (str): The name of the command for which help is needed. An alias works too. If not given, the default help message gets sent.
+        cmd_name (str): [Optional] The name of the command for which help is needed. An alias works too. If not given, the default help message gets sent.
 
     Returns:
         None
     """
 
-    # Check if any info was given. If not send the standard help message.
-    if not info:
-        await ctx.send(embed=config.HELP_MESSAGE)  # Send the help message
+    is_admin(ctx.author)  # Check if the author is an admin.
 
-    for command in bot.commands:
+    # Check if any command name was given. If not, send the standard help message.
+    if not cmd_name:
+        await ctx.send(embed=config.HELP_MESSAGE)  # Send the standard help message.
+
+    for command in bot.commands:  # Loop through every command of the bot.
+        # Create the embed.
         embed = discord.Embed(
                 title=command.name,
                 color=discord.Color.gold(),
-                description=command.help).set_footer(text="Note: This is the "
+                description=command.help.replace("\n    ", "\n- ")).set_footer(text="Note: This is the "
                 "documentation found in the code for this command. Some info may "
                 "not be relevant for you.")
-        if command.name == info:
-            await ctx.send(embed=embed)
-            break
+
+        # Check if the command name is the same as the name of the command for which help is needed.
+        if command.name == cmd_name:
+            await ctx.send(embed=embed)  # If so, send the embed.
+            return
         else:
+            #  Check if the name of the command for which help is needed, is an alias of the command.
             for alias in command.aliases:
-                if alias == info:
-                    await ctx.send(embed=embed)
-                    break
+                if alias == cmd_name:
+                    await ctx.send(embed=embed)  # If so, send the embed.
+                    return
+
+    # Send the standard help message if the name of the command for which help is needed was not found.
+    await ctx.send(embed=config.HELP_MESSAGE)
 
 
 @bot.command(aliases=["create", "create_giv", "start", "start_giv", "giv",
@@ -81,15 +90,13 @@ async def giveaway(ctx, winners: int, duration: str, prize: str, *description):
     Summons a giveaway in the giveaway channel.
 
     Aliases:
-        "create", "create_giv", "start", "start_giv", "giv",
-        "create_giveaway", "start_giveaway"
+        "create", "create_giv", "start", "start_giv", "giv", "create_giveaway", "start_giveaway"
 
     Attributes:
         winners (int): The amount of winners of the giveaway.
-        duration (str): The time before, or at which, the giveaway ends.
-                        See the help message for time formats.
+        duration (str): The time before, or at which, the giveaway ends. See the help message for time formats.
         prize (str): The prize of the giveaway.
-        description (tuple): [Optional] The description of the giveaway. [Optional]
+        description (tuple): [Optional] The description of the giveaway.
 
     Returns:
         None
@@ -125,18 +132,20 @@ async def close(ctx, msg_id: int):
 @bot.command(aliases=["reroll_giv", "reroll_giveaway"])
 async def reroll(ctx, msg_id: int, winners: int = 1):
     """
-    Closes the giveaway prematurely.
+    Re-draws a specified amount of winners of a giveaway. Also removes the already drawn winners of the giveaway from the "entered" list.
 
     Aliases:
         "reroll_giv", "reroll_giveaway"
 
     Attributes:
-        msg_id (int): The id of the giveaway message of the giveaway to reroll.
-        winners (int): The amount of winners to reroll. Default = 1
+        msg_id (int): The id of the giveaway message of the giveaway to re-roll.
+        winners (int): The amount of winners to re-roll. Default = 1
 
     Returns:
         None
     """
+
+    is_admin(ctx.author)  # Check if the author is an admin.
 
     # Check if the number of winners is lower or equal to 0. If it is, raise an error.
     if winners <= 0:
