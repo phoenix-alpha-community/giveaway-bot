@@ -38,22 +38,40 @@ async def on_command_error(ctx, error):
 # Commands
 ###############################################################################
 
-@bot.command(aliases=["help"])
-async def help_msg(ctx):
+@bot.command(aliases=["help", "info"])
+async def help_msg(ctx, info: str = False):
     """
     Sends a help message with description of every available command.
 
     Aliases:
-        "help"
+        "help", "info"
 
     Attributes:
-        None
+        info (str): The name of the command for which help is needed. An alias works too. If not given, the default help message gets sent.
 
     Returns:
         None
     """
 
-    await ctx.send(embed=config.HELP_MESSAGE)  # Send the help message
+    # Check if any info was given. If not send the standard help message.
+    if not info:
+        await ctx.send(embed=config.HELP_MESSAGE)  # Send the help message
+
+    for command in bot.commands:
+        embed = discord.Embed(
+                title=command.name,
+                color=discord.Color.gold(),
+                description=command.help).set_footer(text="Note: This is the "
+                "documentation found in the code for this command. Some info may "
+                "not be relevant for you.")
+        if command.name == info:
+            await ctx.send(embed=embed)
+            break
+        else:
+            for alias in command.aliases:
+                if alias == info:
+                    await ctx.send(embed=embed)
+                    break
 
 
 @bot.command(aliases=["create", "create_giv", "start", "start_giv", "giv",
@@ -71,7 +89,7 @@ async def giveaway(ctx, winners: int, duration: str, prize: str, *description):
         duration (str): The time before, or at which, the giveaway ends.
                         See the help message for time formats.
         prize (str): The prize of the giveaway.
-        description (tuple): [Optional] The description of the giveaway.
+        description (tuple): [Optional] The description of the giveaway. [Optional]
 
     Returns:
         None
@@ -93,7 +111,7 @@ async def close(ctx, msg_id: int):
         "end", "end_giv", "close_giv", "end_giveaway", "close_giveaway"
 
     Attributes:
-        msg_id (int): Id of the giveaway message of the giveaway to close.
+        msg_id (int): The id of the giveaway message of the giveaway to close.
 
     Returns:
         None
@@ -113,7 +131,7 @@ async def reroll(ctx, msg_id: int, winners: int = 1):
         "reroll_giv", "reroll_giveaway"
 
     Attributes:
-        msg_id (int): Id of the giveaway message of the giveaway to reroll.
+        msg_id (int): The id of the giveaway message of the giveaway to reroll.
         winners (int): The amount of winners to reroll. Default = 1
 
     Returns:
