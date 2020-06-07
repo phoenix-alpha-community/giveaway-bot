@@ -58,6 +58,7 @@ async def help_msg(ctx, cmd_name: str = False):
     # Check if any command name was given. If not, send the standard help message.
     if not cmd_name:
         await ctx.send(embed=config.HELP_MESSAGE)  # Send the standard help message.
+        return
 
     for command in bot.commands:  # Loop through every command of the bot.
         # Create the embed.
