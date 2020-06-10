@@ -1,2 +1,5 @@
 TODO:
 - more testing
+- fix unlimited number of winners
+- check incorrect dates
+- add message links
