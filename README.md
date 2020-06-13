@@ -33,16 +33,14 @@ If no name is given (or the given command is not found), the standard help messa
 
 ### Create giveaway command
 ```
-^giveaway [winners] [duration] "[prize]" [description]
+^giveaway [duration] [winners]w [prize]( >[description])
 ```
-Used to start a giveaway. Insert the prize, the amount of winners and the duration of the giveaway.
-The description is optional.
+Used to start a giveaway. Insert the prize, the amount of winners and the duration 
+of the giveaway. Everything inside the round brackets is optional (description included).
 
 The duration can have different formats:
-- **+xy** Examples: `+4h`, `"+2h 30m"`, `"+1d 6h 24m"`
-- **M/D/Y T** Examples: `"06/28/20 6pm"`, `"12/03/21 7:25 am"`
-
-Please mind all double quotes.
+- **+xy** Examples: `+4h`, `+2h 30m`, `+1d 6h 24m`
+- **M/D/Y T** Examples: `06/28/20 6pm`, `12/03/21 7:25 am`
 
 ### Close giveaway command
 ```

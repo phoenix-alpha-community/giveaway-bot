@@ -5,7 +5,8 @@ Fear and Terror's bot for giveaways on Discord
 import config
 import discord
 import error_handling
-from check_roles import is_admin
+import other
+import re
 from database import db_write_ids
 from discord.ext import commands
 from giveaway import Giveaway, giv_end, draw_winners
@@ -53,7 +54,7 @@ async def help_msg(ctx, cmd_name: str = False):
         None
     """
 
-    is_admin(ctx.author)  # Check if the author is an admin.
+    other.is_admin(ctx.author)  # Check if the author is an admin.
 
     # Check if any command name was given. If not, send the standard help message.
     if not cmd_name:
@@ -85,8 +86,8 @@ async def help_msg(ctx, cmd_name: str = False):
 
 
 @bot.command(aliases=["create", "create_giv", "start", "start_giv", "giv",
-                      "create_giveaway", "start_giveaway"])
-async def giveaway(ctx, winners: int, duration: str, prize: str, *description):
+                      "create_giveaway", "start_giveaway"], rest_is_raw=True)
+async def giveaway(ctx, *, text: str):
     """
     Summons a giveaway in the giveaway channel.
 
@@ -94,18 +95,32 @@ async def giveaway(ctx, winners: int, duration: str, prize: str, *description):
         "create", "create_giv", "start", "start_giv", "giv", "create_giveaway", "start_giveaway"
 
     Attributes:
-        winners (int): The amount of winners of the giveaway.
-        duration (str): The time before, or at which, the giveaway ends. See the help message for time formats.
-        prize (str): The prize of the giveaway.
-        description (tuple): [Optional] The description of the giveaway.
+        *text: All attributes are taken directly from the message content using regexes. The arguments taken are:
+            ... winners (str): The amount of winners of the giveaway. Will be transformed to int before creating the giveaway class.
+            ... duration (str): The time before, or at which, the giveaway ends. See the help message for time formats.
+            ... prize (str): The prize of the giveaway.
+            ... description (str): [Optional] The description of the giveaway.
 
     Returns:
         None
     """
 
-    is_admin(ctx.author)  # Check if the author is an admin.
+    other.is_admin(ctx.author)  # Check if the author is an admin.
 
-    giv = Giveaway(winners, duration, prize, description, ctx.author)  # Create giveaway object
+    # Using a regex get all attributes
+    pattern = r"(.+) ([0-9]+)w ([^>]+)( >(.+))?$"  # The pattern of the regex.
+    try:
+        duration, winners, prize, description = re.search(pattern, text).group(1, 2, 3, 5)  # Assign the values.
+    except AttributeError:
+        raise other.IncorrectUsageError  # If the regex doesn't match the str, raise an error.
+
+    # Check if the description is None. If it is, convert it to an empty str.
+    if description is None:
+        description = ""
+    else:
+        description += "\n"  # Else add a newline to the end.
+
+    giv = Giveaway(int(winners), duration[1:], prize, description, ctx.author)  # Create giveaway object
     await giv.create_giv()  # Start giveaway
     giv.timer_id = delayed_execute(giv_end, [giv.id], giv.duration)  # Start the "timer"
     db_write_ids(giv.id, giv)  # Save the giveaway in the database
@@ -125,7 +140,7 @@ async def close(ctx, msg_id: int):
         None
     """
 
-    is_admin(ctx.author)  # Check if the author is an admin.
+    other.is_admin(ctx.author)  # Check if the author is an admin.
 
     await giv_end(msg_id)  # End the giveaway.
 
@@ -146,13 +161,22 @@ async def reroll(ctx, msg_id: int, winners: int = 1):
         None
     """
 
-    is_admin(ctx.author)  # Check if the author is an admin.
+    other.is_admin(ctx.author)  # Check if the author is an admin.
 
     # Check if the number of winners is lower or equal to 0. If it is, raise an error.
     if winners <= 0:
-        raise Giveaway.GiveawayWinnersError
+        raise Giveaway.GiveawayLowWinnersError
 
-    msg: discord.Message = await config.GIVEAWAY_CHANNEL.fetch_message(msg_id)  # Get the message object of the giveaway message.
+    try:
+        msg: discord.Message = await config.GIVEAWAY_CHANNEL.fetch_message(msg_id)  # Get the message object of the giveaway message.
+    except discord.errors.NotFound:
+        raise other.InexistentMessageError  # Raise an error if there is no message with that ID.
+
+    # Check if the message is an ended giveaway message. If it's not send an error message and return.
+    if not other.check_giveaway_msg(msg, False, bot.user):
+        await ctx.send(f"{ctx.author.mention} The given ID is not the ID of an ended giveaway.")
+        return
+
     new = await draw_winners(msg, winners, reroll=True)  # Draw the new winners. (type: list)
 
     # Check if the first winner is a member object. If it's not return.

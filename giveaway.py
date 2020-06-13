@@ -4,6 +4,8 @@ This module is used to host the Giveaway class.
 
 import config
 import discord
+import decimal
+import other
 import pytimeparse
 import re
 from database import db_read_ids, db_remove_ids
@@ -31,13 +33,17 @@ class Giveaway:
     """
 
     def __init__(self, winners: int, duration: str, prize: str,
-                 description: tuple, host: discord.Member):
+                 description: str, host: discord.Member):
         # Check if the number of winners is lower or equal to 0. If it is, raise an error.
         if winners <= 0:
-            raise self.GiveawayWinnersError
+            raise self.GiveawayLowWinnersError
+
+        # Check if the number of winners is higher than the max amount of winners. If it is, raise an error.
+        if winners > config.WINNERS_MAX_AMOUNT:
+            raise self.GiveawayHighWinnersError
 
         self.duration = self.convert_dur(duration)  # The duration of the giveaway. (type: datetime.datetime)
-        self.description = self.convert_desc(description)  # The description of the giveaway. (type: str)
+        self.description = description  # The description of the giveaway. (type: str)
         self.host = host.id  # The id of the member who started the giveaway. (type: int)
         self.id = None  # *Check doc below*
         self.prize = prize  # The prize of the giveaway. (type: str)
@@ -90,7 +96,10 @@ class Giveaway:
             None
         """
 
-        msg = await self.get_message()  # Get the message object of the giveaway. (type: discord.Message)
+        try:
+            msg = await self.get_message()  # Get the message object of the giveaway. (type: discord.Message)
+        except discord.errors.NotFound:
+            raise other.InexistentMessageError
 
         winners = await draw_winners(msg, self.winners)  # Draw the winners of the giveaway. (type: list)
 
@@ -108,8 +117,18 @@ class Giveaway:
                 win_text = "Winner"
                 text_1 = winners[0].mention
 
-            # Send a message in the giveaway channel.
-            await config.GIVEAWAY_CHANNEL.send(f"Congratulations {text_2[:-2]}! You won: {self.prize}!")
+            # Format the embed for the giveaway message
+            embed = discord.Embed(
+                title="The Giveaway ended!",
+                color=discord.Color.green(),
+                description=f"Congratulations {text_2[:-2]}! You won: {self.prize}!\n"
+                            f"__[Click here]({msg.jump_url})__ to go to the giveaway."
+            )
+
+            # Send the embed in the giveaway channel and react to it with the "clapping hands" emoji.
+            await (await config.GIVEAWAY_CHANNEL.send(embed=embed))\
+                .add_reaction(b"\xF0\x9F\x91\x8F".decode())
+
         else:  # This is likely because no one won the giveaway.
             win_text = "Winners"
             text_1 = winners[0]
@@ -140,7 +159,7 @@ class Giveaway:
         """
 
         def _add():
-            # Check if the duration begins with "+". If it doesn't, return.
+            # Check if the duration begins with "+". If it doesn't, return False.
             if not dur.startswith("+"):
                 return False
 
@@ -151,27 +170,25 @@ class Giveaway:
 
         time = _add()
 
-        # Check if the time is False. If it is return the datetime.
+        # Check if the time is False. If it is parse the str with parser.parse()
         if not time:
-            return config.TIMEZONE.localize(parser.parse(dur))
-        return time.replace(second=0, microsecond=0)  # Return the round time
+            try:
+                time = config.TIMEZONE.localize(parser.parse(dur))  # Get the datetime of the giveaway.
+            except ValueError or decimal.InvalidOperation:
+                raise self.GiveawayInvalidDuration  # Raise error if the given str could not be parsed.
 
-    def convert_desc(self, description: tuple) -> str:
-        """
-        Converts the description from a tuple to a string.
+        else:
+            time = time.replace(second=0, microsecond=0)  # Round the time.
 
-        Attributes:
-            description (str): The description to be converted.
+        # Check if the given datetime is in the past. If it is, raise an error.
+        if time < datetime.now(config.TIMEZONE):
+            raise self.GiveawayPastDateError
 
-        Returns:
-            str: The converted description.
-        """
+        # Check if the given datetime is more than 365 days away (1 year). If it is, raise an error.
+        if datetime.now(config.TIMEZONE) + timedelta(days=365) < time:
+            raise self.GiveawayFutureDateError
 
-        desc = ""
-        for s in description:
-            desc += " " + s + " "
-
-        return "\n" + desc + "\n"
+        return time  # Return the datetime
 
     def get_host(self) -> discord.Member:
         """
@@ -201,10 +218,38 @@ class Giveaway:
         return await config.GIVEAWAY_CHANNEL.fetch_message(self.id)
 
     # Errors
-    class GiveawayWinnersError(commands.CommandError):
+    class GiveawayLowWinnersError(commands.CommandError):
         """
         This error gets raised only in the giveaway __init__ function.
         It gets raised when the amount of winners is lower or equal to 0
+        """
+        pass
+
+    class GiveawayHighWinnersError(commands.CommandError):
+        """
+        This error gets raised only in the giveaway __init__ function.
+        It gets raised when the amount of winners is higher than config.WINNERS_MAX_AMOUNT
+        """
+        pass
+
+    class GiveawayPastDateError(commands.CommandError):
+        """
+        This error gets raised only in the giveaway convert_dur function.
+        It gets raised when the given date is in the past.
+        """
+        pass
+
+    class GiveawayFutureDateError(commands.CommandError):
+        """
+        This error gets raised only in the giveaway convert_dur function.
+        It gets raised when the given date is more than 365 days away (1 year).
+        """
+        pass
+
+    class GiveawayInvalidDuration(commands.CommandError):
+        """
+        This error gets raised only in the giveaway convert_dur function.
+        It gets raised when the given duration could not be parsed.
         """
         pass
 
@@ -264,4 +309,7 @@ async def giv_end(giv_id):
         None
     """
 
-    await (db_read_ids())[giv_id].end_giv()
+    try:
+        await (db_read_ids())[giv_id].end_giv()
+    except KeyError:
+        return

@@ -1,5 +1,6 @@
-from config import HELP_MESSAGE
+import other
 import traceback
+from config import HELP_MESSAGE, WINNERS_MAX_AMOUNT
 from discord.ext import commands
 from giveaway import Giveaway
 
@@ -15,18 +16,44 @@ async def handle_error(ctx: commands.Context,
     # Syntax errors
     syntax_error_classes = [
         commands.MissingRequiredArgument,
-        commands.errors.BadArgument
+        commands.errors.BadArgument,
+        other.IncorrectUsageError
     ]
     for cls in syntax_error_classes:
         if isinstance(error, cls):
-            await ctx.send(f"> {ctx.author.mention} Incorrect usage. "
-                     f"See usage help below.")
+            await ctx.send(f"> {ctx.author.mention} The command format you used is incorrect. "
+                     f"See correct usage for the command in the help message below.")
             await ctx.send(embed=HELP_MESSAGE)
             return
 
     # Costume errors
-    if isinstance(error, Giveaway.GiveawayWinnersError):
+    if isinstance(error, Giveaway.GiveawayLowWinnersError):
         await ctx.send(f"> {ctx.author.mention} Winners amount is too low.")
+        return
+
+    if isinstance(error, Giveaway.GiveawayHighWinnersError):
+        await ctx.send(f"> {ctx.author.mention} Winners amount is too high. "
+                       f"(MAX = {WINNERS_MAX_AMOUNT})")
+        return
+
+    if isinstance(error, Giveaway.GiveawayPastDateError):
+        await ctx.send(f"{ctx.author.mention} Time machines don't exist yet.")
+        return
+
+    if isinstance(error, Giveaway.GiveawayFutureDateError):
+        await ctx.send(f"{ctx.author.mention} The end of the giveaway is "
+                       f"more than 365 days away (1 year).\nSet it closer.")
+        return
+
+    if isinstance(error, Giveaway.GiveawayInvalidDuration):
+        await ctx.send(f"{ctx.author.mention} An invalid duration was given.\n"
+                       f"Read the help message for example-formats.")
+        return
+
+    if isinstance(error, other.InexistentMessageError):
+        await ctx.send(f"{ctx.author.mention} The given ID doesn't match any "
+                       "of the giveaway messages. This could also happen if "
+                       "the giveaway message has been deleted.")
         return
 
     # Permission errors

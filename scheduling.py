@@ -47,9 +47,9 @@ def delayed_execute(func, args, exec_time: datetime):
         None
     """
 
-    id = _scheduler.add_job(_execute_wrapper, 'date',
+    _id = _scheduler.add_job(_execute_wrapper, 'date',
                             args=[func] + args, run_date=exec_time).id
-    return id
+    return _id
 
 
 # wrap function to include transaction.commit

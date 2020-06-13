@@ -1,5 +1,5 @@
 TODO:
 - more testing
-- fix unlimited number of winners
-- check incorrect dates
-- add message links
+- add countdown to giveaway embed
+- add assisted in-depth giveaway creation in DMs
+- complete rewrite of the bot (many modifications can be made that would greatly improve the code's health)
