@@ -3,9 +3,19 @@ BOT_TOKEN: str = "BOT TOKEN HERE"
 
 # Optional settings (may be changed)
 BOT_CMD_PREFIX: str = "^"
-BOT_ADMIN_ROLES: list = [677916986352730112]  # Test role id, must be changed
-GIVEAWAY_CHANNEL_ID: int = 643985296668622848  # Test channel id, must be changed
-GUILD_ID: int = 643983215056519178  # Test server id, must be changed
+BOT_ADMIN_ROLES: list = [
+    601467946858184704, # Clan Leader
+    458087769303023617, # Clan Director
+    679233922885746698, # Chief Operations Officer
+    679234440496545792, # Chief Technology Officer
+    398544403314245633, # Squad Director
+    471757506562228235, # Tarkov Director
+    620724284175941663, # Rainbow 6 Siege Director
+    674731492647108608, # Post Scriptum Director
+    718174200006836415, # Last Oasis Director
+]
+GIVEAWAY_CHANNEL_ID: int = 720436444409102336 # bot-giveaway
+GUILD_ID: int = 398543362476605441 # FaT
 GIVEAWAY_EMOJI: bytes = b"\xF0\x9F\x8E\x89"  # Unicode emojis only (https://apps.timwhitlock.info/emoji/tables/unicode)
 DATABASE_LOCATION: str = "database.pickle"  # If this file is missing it will be created during startup
 WINNERS_MAX_AMOUNT: int = 10000000
