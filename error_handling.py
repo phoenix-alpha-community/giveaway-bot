@@ -1,3 +1,4 @@
+import discord
 import other
 import traceback
 from config import HELP_MESSAGE, WINNERS_MAX_AMOUNT
@@ -67,6 +68,10 @@ async def handle_error(ctx: commands.Context,
         await ctx.send(f"> {ctx.author.mention} Command is not applicable or "
                        f"you lack the permission to use it.")
         return
+
+    if isinstance(error, discord.errors.Forbidden):
+        await ctx.send((f"> {ctx.author.mention} The bot is not allowed in "
+                        f"the giveaway channel."))
 
     # Unknown command
     if isinstance(error, commands.CommandNotFound):

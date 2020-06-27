@@ -211,6 +211,7 @@ async def init():
 
     config.GUILD = bot.get_guild(config.GUILD_ID)  # Get guild object
     config.GIVEAWAY_CHANNEL = config.GUILD.get_channel(config.GIVEAWAY_CHANNEL_ID)  # Get giveaway channel object
+    config.GIVEAWAY_TITLE_EMOJI = bot.get_emoji(config.GIVEAWAY_TITLE_EMOJI_ID)  # Get giveaway title emoji object
 
     await bot.change_presence(activity=discord.Game(f"FaT | {config.BOT_CMD_PREFIX}help"))  # Change bot's activity
 

@@ -73,7 +73,8 @@ class Giveaway:
             win = "winner"
 
         # Send the giveaway message. Save it's id.
-        self.id = (await config.GIVEAWAY_CHANNEL.send(":FaT: **GIVEAWAY** :FaT:",
+        self.id = (await config.GIVEAWAY_CHANNEL.send(f"{config.GIVEAWAY_TITLE_EMOJI}"
+                                      f" **GIVEAWAY** {config.GIVEAWAY_TITLE_EMOJI}",
               embed=discord.Embed(
                   color=discord.Color.green(),
                   title=self.prize,
@@ -99,6 +100,7 @@ class Giveaway:
         try:
             msg = await self.get_message()  # Get the message object of the giveaway. (type: discord.Message)
         except discord.errors.NotFound:
+            print("====DISCLAMER:====\nIf the error below is \"other.InexistentMessageError\" it can be ignored.\n========")
             raise other.InexistentMessageError
 
         winners = await draw_winners(msg, self.winners)  # Draw the winners of the giveaway. (type: list)
@@ -164,7 +166,10 @@ class Giveaway:
                 return False
 
             dt = datetime.now(config.TIMEZONE)  # Get the current time.
-            delta = timedelta(seconds=pytimeparse.parse(dur[1:].lower()))  # Get the timedelta of the giveaway.
+            try:
+                delta = timedelta(seconds=pytimeparse.parse(dur[1:].lower()))  # Get the timedelta of the giveaway.
+            except TypeError:
+                return False  # Return false if the date could not be parsed.
 
             return dt + delta  # Return the current time + the timedelta given.
 
@@ -173,7 +178,7 @@ class Giveaway:
         # Check if the time is False. If it is parse the str with parser.parse()
         if not time:
             try:
-                time = config.TIMEZONE.localize(parser.parse(dur))  # Get the datetime of the giveaway.
+                time = config.TIMEZONE.localize(parser.parse(dur.replace("+", "")))  # Get the datetime of the giveaway.
             except ValueError or decimal.InvalidOperation:
                 raise self.GiveawayInvalidDuration  # Raise error if the given str could not be parsed.
 

@@ -14,9 +14,10 @@ BOT_ADMIN_ROLES: list = [
     674731492647108608, # Post Scriptum Director
     718174200006836415, # Last Oasis Director
 ]
-GIVEAWAY_CHANNEL_ID: int = 720436444409102336 # bot-giveaway
+GIVEAWAY_CHANNEL_ID: int = 569701870839398400 # news-room
 GUILD_ID: int = 398543362476605441 # FaT
 GIVEAWAY_EMOJI: bytes = b"\xF0\x9F\x8E\x89"  # Unicode emojis only (https://apps.timwhitlock.info/emoji/tables/unicode)
+GIVEAWAY_TITLE_EMOJI_ID: int = 410612069398740992  # :FaT:
 DATABASE_LOCATION: str = "database.pickle"  # If this file is missing it will be created during startup
 WINNERS_MAX_AMOUNT: int = 10000000
 
@@ -55,3 +56,5 @@ TIMEZONE = pytz.timezone("US/Eastern")  # Is used only as a standard timezone fo
 GIVEAWAY_CHANNEL = None  # defined later during startup
 
 GUILD = None  # defined later during startup
+
+GIVEAWAY_TITLE_EMOJI = None  # defined later during startup
